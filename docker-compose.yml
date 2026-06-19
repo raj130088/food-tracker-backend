@@ -15,7 +15,7 @@ services:
 
   backend:
     # build: .
-    image: your_dockerhub_username/food-tracker-backend:latest
+    image: psyduck130088/food-tracker-backend:latest
     container_name: food-tracker-backend
     ports:
       - "5000:5000"
