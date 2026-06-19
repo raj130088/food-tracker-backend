@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout 30s npm run dev)",
+      "Bash(curl -X POST http://localhost:5000/api/auth/register -H \"Content-Type: application/json\" -d '{\"email\":\"test3@example.com\",\"password\":\"password123\",\"name\":\"Test User 3\"}')",
+      "Bash(curl -X POST http://localhost:5000/api/auth/register -H \"Content-Type: application/json\" -d '{\"email\":\"test4@example.com\",\"password\":\"password123\",\"name\":\"Test User 4\"}')",
+      "Bash(pkill -f \"nodemon src/server.js\")",
+      "Bash(pkill -f \"node src/server.js\")",
+      "Bash(node src/server.js)",
+      "Bash(tee server_debug.log)",
+      "Bash(curl -X POST http://localhost:5000/api/auth/register -H \"Content-Type: application/json\" -d '{\"email\":\"test5@example.com\",\"password\":\"password123\",\"name\":\"Test User 5\"}')",
+      "Bash(docker-compose up *)",
+      "Bash(docker-compose ps *)",
+      "Bash(curl *)",
+      "Bash(docker-compose logs *)"
+    ]
+  }
+}
