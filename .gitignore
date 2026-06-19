@@ -1,5 +1,6 @@
-node_modules/
 .env
+node_modules/
+.claude/
 server.log
 server_debug.log
 postgres_data/
