@@ -14,12 +14,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-<<<<<<< HEAD
-    # build: .
     image: psyduck130088/food-tracker-backend:latest
-=======
-    build: .
->>>>>>> 035e394 (update server file)
     container_name: food-tracker-backend
     ports:
       - "5000:5000"
@@ -29,9 +24,6 @@ services:
       - JWT_SECRET=your_super_secret_jwt_key_change_in_production
     depends_on:
       - postgres
-    volumes:
-      - .:/app
-      - /app/node_modules
     restart: unless-stopped
 
 volumes:
