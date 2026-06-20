@@ -7,6 +7,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth.routes');
 const mealRoutes = require('./routes/meal.routes');
 const userRoutes = require('./routes/user.routes');
+const aiRoutes = require('./ai/ai.routes');
 
 const authMiddleware = require('./middleware/auth.middleware');
 const errorHandler = require('./middleware/error.middleware');
@@ -28,6 +29,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/meals', mealRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Protected test route
 app.get('/api/protected', authMiddleware, (req, res) => {

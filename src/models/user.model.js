@@ -36,9 +36,11 @@ const User = {
 
   // Update user profile/goals
   async update(id, updateData) {
-    const allowedFields = ['name', 'age', 'gender', 'height', 'weight', 'activity_level', 
-                          'daily_calorie_goal', 'protein_goal', 'carb_goal', 'fat_goal'];
-    
+    const allowedFields = [
+      'name', 'age', 'gender', 'height', 'weight', 'activity_level', 
+      'daily_calorie_goal', 'protein_goal', 'carb_goal', 'fat_goal',
+      'diet_type', 'allergies', 'food_preferences', 'food_dislikes'
+    ];
     const updates = [];
     const values = [];
     let paramCount = 1;

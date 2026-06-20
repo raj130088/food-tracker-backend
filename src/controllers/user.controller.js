@@ -1,23 +1,19 @@
-const User = require('../models/user.model');
+const userService = require('../services/user.service');
 
 const userController = {
-  // Get current user profile
   async getProfile(req, res) {
     try {
-      res.json({
-        success: true,
-        user: req.user
-      });
+      const user = await userService.getProfile(req.user.id);
+      res.json({ success: true, user });
     } catch (error) {
+      console.error(error);
       res.status(500).json({ success: false, message: 'Error fetching profile' });
     }
   },
 
-  // Update user profile/goals
   async updateProfile(req, res) {
     try {
-      const userId = req.user.id;
-      const updatedUser = await User.update(userId, req.body);
+      const updatedUser = await userService.updateProfile(req.user.id, req.body);
 
       if (!updatedUser) {
         return res.status(400).json({ success: false, message: 'No valid fields to update' });

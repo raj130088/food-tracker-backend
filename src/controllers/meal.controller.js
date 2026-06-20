@@ -1,6 +1,6 @@
 const Food = require('../models/food.model');
-const Meal = require('../models/meal.model');
-const pool = require('../config/database');
+const mealService = require('../services/meal.service'); 
+const analyticsService = require('../services/analytics.service');
 
 const mealController = {
   // Search foods
@@ -27,7 +27,7 @@ const mealController = {
         return res.status(400).json({ success: false, message: 'Meal type and items are required' });
       }
 
-      const meal = await Meal.create(userId, mealData);
+      const meal = await mealService.createMeal(userId, mealData);
 
       res.status(201).json({
         success: true,
@@ -45,8 +45,9 @@ const mealController = {
     try {
       const userId = req.user.id;
       const { date } = req.query;
+      const targetDate = date || new Date().toISOString().split('T')[0];
 
-      const meals = await Meal.getByDate(userId, date || new Date().toISOString().split('T')[0]);
+      const meals = await mealService.getMealsByDate(userId, targetDate);
       res.json({ success: true, meals });
     } catch (error) {
       console.error(error);
@@ -54,39 +55,27 @@ const mealController = {
     }
   },
 
-    // Get daily summary with totals
+  // Get daily summary with totals (Phase 3 Analytics Engine integration)
   async getDailySummary(req, res) {
     try {
       const userId = req.user.id;
       const { date } = req.query;
       const targetDate = date || new Date().toISOString().split('T')[0];
 
-      const result = await pool.query(`
-        SELECT 
-          COALESCE(SUM(mi.custom_calories), 0) as total_calories,
-          COALESCE(SUM(mi.custom_protein), 0) as total_protein,
-          COALESCE(SUM(mi.custom_carbs), 0) as total_carbs,
-          COALESCE(SUM(mi.custom_fat), 0) as total_fat,
-          COUNT(DISTINCT ml.id) as meal_count
-        FROM meal_logs ml
-        LEFT JOIN meal_items mi ON ml.id = mi.meal_log_id
-        WHERE ml.user_id = $1 AND ml.log_date = $2
-      `, [userId, targetDate]);
-
-      const summary = result.rows[0];
+      const summary = await analyticsService.getDailySummary(userId, targetDate);
 
       res.json({
         success: true,
         date: targetDate,
         summary: {
-          total_calories: parseInt(summary.total_calories),
-          total_protein: parseFloat(summary.total_protein),
-          total_carbs: parseFloat(summary.total_carbs),
-          total_fat: parseFloat(summary.total_fat),
-          meal_count: parseInt(summary.meal_count)
+          total_calories: parseInt(summary.total_calories || 0),
+          total_protein: parseFloat(summary.total_protein || 0),
+          total_carbs: parseFloat(summary.total_carbs || 0),
+          total_fat: parseFloat(summary.total_fat || 0),
+          meal_count: parseInt(summary.meal_count || 0)
         },
         goal: {
-          daily_calorie_goal: req.user.daily_calorie_goal
+          daily_calorie_goal: req.user.daily_calorie_goal || 2000
         }
       });
     } catch (error) {
@@ -95,40 +84,28 @@ const mealController = {
     }
   },
 
-  // Get weekly summary
-  async getWeeklySummary(req, res) {
-    try {
-      const userId = req.user.id;
+    async getWeeklySummary(req, res) {
+      try {
+        const userId = req.user.id;
+        const weeklyData = await analyticsService.getWeeklySummary(userId);
 
-      const result = await pool.query(`
-        SELECT 
-          DATE(log_date) as date,
-          SUM(COALESCE(mi.custom_calories, 0)) as total_calories
-        FROM meal_logs ml
-        LEFT JOIN meal_items mi ON ml.id = mi.meal_log_id
-        WHERE ml.user_id = $1 
-          AND ml.log_date >= CURRENT_DATE - INTERVAL '7 days'
-        GROUP BY DATE(log_date)
-        ORDER BY date DESC
-      `, [userId]);
+        res.json({
+          success: true,
+          weekly_summary: weeklyData
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error fetching weekly summary' });
+      }
+    },
 
-      res.json({
-        success: true,
-        weekly_summary: result.rows
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, message: 'Error fetching weekly summary' });
-    }
-  },
-
-    // Get meal history
+  // Get meal history
   async getHistory(req, res) {
     try {
       const userId = req.user.id;
       const { startDate, endDate, limit = 50, offset = 0 } = req.query;
 
-      const history = await Meal.getHistory(userId, {
+      const history = await mealService.getHistory(userId, {
         startDate,
         endDate,
         limit: parseInt(limit),
@@ -149,32 +126,41 @@ const mealController = {
     }
   },
 
-    // Macro breakdown for pie chart
+  // Delete a meal
+  async deleteMeal(req, res) {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+
+      const isDeleted = await mealService.deleteMeal(userId, id);
+
+      if (!isDeleted) {
+        return res.status(404).json({ success: false, message: 'Meal not found or unauthorized' });
+      }
+
+      res.json({ success: true, message: 'Meal deleted successfully' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Error deleting meal' });
+    }
+  },
+
+  // Macro Breakdown (Phase 3 Analytics Engine integration)
   async getMacroBreakdown(req, res) {
     try {
       const userId = req.user.id;
       const { date } = req.query;
       const targetDate = date || new Date().toISOString().split('T')[0];
 
-      const result = await pool.query(`
-        SELECT 
-          COALESCE(SUM(mi.custom_protein), 0) as protein,
-          COALESCE(SUM(mi.custom_carbs), 0) as carbs,
-          COALESCE(SUM(mi.custom_fat), 0) as fat
-        FROM meal_logs ml
-        LEFT JOIN meal_items mi ON ml.id = mi.meal_log_id
-        WHERE ml.user_id = $1 AND ml.log_date = $2
-      `, [userId, targetDate]);
-
-      const data = result.rows[0];
+      const macros = await analyticsService.getMacroBreakdown(userId, targetDate);
 
       res.json({
         success: true,
         date: targetDate,
         macros: {
-          protein: parseFloat(data.protein),
-          carbs: parseFloat(data.carbs),
-          fat: parseFloat(data.fat)
+          protein: parseFloat(macros.protein || 0),
+          carbs: parseFloat(macros.carbs || 0),
+          fat: parseFloat(macros.fat || 0)
         }
       });
     } catch (error) {
@@ -183,53 +169,20 @@ const mealController = {
     }
   },
 
-  // Calorie trend for line chart (last 7 days)
+  // Calorie Trend (Phase 3 Analytics Engine integration)
   async getCalorieTrend(req, res) {
     try {
       const userId = req.user.id;
 
-      const result = await pool.query(`
-        SELECT 
-          TO_CHAR(ml.log_date, 'Mon DD') as date_label,
-          ml.log_date,
-          SUM(COALESCE(mi.custom_calories, 0)) as total_calories
-        FROM meal_logs ml
-        LEFT JOIN meal_items mi ON ml.id = mi.meal_log_id
-        WHERE ml.user_id = $1 
-          AND ml.log_date >= CURRENT_DATE - INTERVAL '7 days'
-        GROUP BY ml.log_date
-        ORDER BY ml.log_date ASC
-      `, [userId]);
+      const trend = await analyticsService.getCalorieTrend(userId);
 
       res.json({
         success: true,
-        trend: result.rows
+        trend
       });
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, message: 'Error fetching calorie trend' });
-    }
-  },
-
-    // Delete a meal
-  async deleteMeal(req, res) {
-    try {
-      const userId = req.user.id;
-      const { id } = req.params;
-
-      const result = await pool.query(
-        'DELETE FROM meal_logs WHERE id = $1 AND user_id = $2 RETURNING id',
-        [id, userId]
-      );
-
-      if (result.rowCount === 0) {
-        return res.status(404).json({ success: false, message: 'Meal not found or unauthorized' });
-      }
-
-      res.json({ success: true, message: 'Meal deleted successfully' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, message: 'Error deleting meal' });
     }
   }
 };

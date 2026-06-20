@@ -42,6 +42,10 @@ const validationSchemas = {
     protein_goal: z.number().positive().optional(),
     carb_goal: z.number().positive().optional(),
     fat_goal: z.number().positive().optional(),
+    diet_type: z.enum(['vegetarian', 'vegan', 'non-veg', 'keto', 'paleo', null]).optional(),
+    allergies: z.array(z.string()).optional(),
+    food_preferences: z.array(z.string()).optional(),
+    food_dislikes: z.array(z.string()).optional(),
   }).refine(data => Object.keys(data).length > 0, {
     message: "At least one field must be provided"
   })
