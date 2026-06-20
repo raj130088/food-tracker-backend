@@ -87,6 +87,21 @@ const authController = {
       console.error(error);
       res.status(500).json({ success: false, message: 'Server error' });
     }
+  },
+
+    // Logout user
+  async logout(req, res) {
+    res.cookie('token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      expires: new Date(0)   // Expire immediately
+    });
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
   }
 };
 
