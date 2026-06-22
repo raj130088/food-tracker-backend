@@ -18,5 +18,6 @@ const aiLoggingLimiter = rateLimit({
 // All AI interactions must belong to an authenticated user context
 router.post('/chat', authMiddleware, aiController.chatWithCoach);
 router.post('/log-natural', authMiddleware, aiLoggingLimiter, aiController.logNaturalLanguage);
+router.post('/chat-coach', authMiddleware, aiController.chatWithCoach);
 
 module.exports = router;

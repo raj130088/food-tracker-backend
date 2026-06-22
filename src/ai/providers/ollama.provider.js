@@ -2,13 +2,13 @@
 const { Ollama } = require('ollama');
 
 // Use the exact Docker network routing syntax verified in your test script
-const ollama = new Ollama({ host: 'http://host.docker.internal:11434' });
+const ollama = new Ollama({ host: process.env.OLLAMA_HOST });
 
 const ollamaProvider = {
   async chat(prompt, options = {}) {
     try {
       const response = await ollama.chat({
-        model: 'llama3.1:8b', // Exact tag verification matches your system
+        model: process.env.OLLAMA_MODEL, // Exact tag verification matches your system
         messages: [{ role: 'user', content: prompt }],
         ...options
       });
