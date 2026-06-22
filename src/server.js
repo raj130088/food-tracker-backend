@@ -42,7 +42,11 @@ app.get('/api/protected', authMiddleware, (req, res) => {
 
 // Basic routes
 app.get('/', (req, res) => {
-  res.json({ message: 'Food Tracker Backend is running! 🚀' });
+  res.json({
+    service: 'Food Tracker API',
+    version: '1.0.0',
+    status: 'running'
+  });
 });
 
 app.get('/health', (req, res) => {
