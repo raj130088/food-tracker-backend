@@ -1,5 +1,6 @@
 // src/ai/ai.controller.js
 const aiService = require('./ai.service');
+const mealService = require('../services/meal.service');
 
 const aiController = {
   // POST /api/ai/chat
@@ -28,24 +29,45 @@ const aiController = {
   // POST /api/ai/log-natural
   async logNaturalLanguage(req, res) {
     try {
-      const user = req.user;
+      const user = req.user; // Captured from your cookie/auth middleware
       const { message } = req.body;
 
-      if (!message) {
-        return res.status(400).json({ success: false, message: 'Natural language text description is required' });
+      if (!message || typeof message !== 'string' || message.trim().length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid input. Please provide a valid natural language description string in the "message" field.' 
+        });
       }
 
+      // Step 1: Extract tracking matrices from text using local AI
       const extraction = await aiService.handleNaturalLogging(user, message);
+      
+      const { meal_type, items, notes } = extraction.data;
 
-      // In Phase 6, we will write a strict JSON parser here to take this raw extraction
-      // and pipe it directly into mealService.createMeal(). For now, we return it to verify the LLM.
+      // Step 2: Use your Phase 2 meal service to log this straight into the database
+      // This automatically updates the user's meal history logs!
+      const now = new Date();
+      const currentTimeString = now.toTimeString().split(' ')[0];
+
+      const savedMeal = await mealService.createMeal(user.id, {
+        meal_type,
+        items,
+        notes: notes || null,
+        time: currentTimeString // Injecting the current runtime clock execution
+      });
+
       res.json({
         success: true,
-        extracted_data: extraction.raw
+        message: `Successfully logged your ${meal_type}!`,
+        extracted: {
+          meal_type,
+          items
+        },
+        saved_meal: savedMeal
       });
     } catch (error) {
       console.error('AI Controller Logging Error:', error);
-      res.status(500).json({ success: false, message: 'Error extracting natural language food items' });
+      res.status(500).json({ success: false, message: 'Error extracting and saving natural language food items' });
     }
   }
 };

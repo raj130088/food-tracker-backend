@@ -1,3 +1,4 @@
+// src/models/meal.model.js
 const pool = require('../config/database');
 
 const Meal = {
@@ -18,20 +19,70 @@ const Meal = {
 
       const mealLog = mealResult.rows[0];
 
-      // Add meal items
+      // Add meal items with Fuzzy Database Matching
+      // Track unmatched items for warning response
+      const unmatchedItems = [];
+
+      // Add meal items with Fuzzy Database Matching
       for (const item of items) {
+        let finalFoodId = item.food_id || null;
+        let cal = item.custom_calories || 0;
+        let pro = item.custom_protein || 0;
+        let carb = item.custom_carbs || 0;
+        let fat = item.custom_fat || 0;
+
+        // Bypassing text tracking gaps: If food_id is missing but we have a text string name from AI
+        if (!finalFoodId && item.name) {
+          const cleanName = item.name.toLowerCase().trim();
+          
+          // Case insensitive matching with simple plural fallback (dropping trailing 's')
+          const foodSearch = await client.query(`
+            SELECT id, calories, protein, carbs, fat,
+                  CASE 
+                    WHEN LOWER(name) = $1 THEN 1
+                    WHEN LOWER(name) LIKE $2 THEN 2
+                    WHEN $1 LIKE '%' || LOWER(name) || '%' THEN 3
+                    ELSE 4
+                  END as match_priority
+            FROM public.foods 
+            WHERE LOWER(name) = $1 
+              OR LOWER(name) LIKE $2 
+              OR $1 LIKE '%' || LOWER(name) || '%'
+            ORDER BY match_priority, LENGTH(name) DESC
+            LIMIT 1
+          `, [cleanName, `%${cleanName.replace(/s$/, '')}%`]);
+
+          if (foodSearch.rows.length > 0) {
+            const food = foodSearch.rows[0];
+            finalFoodId = food.id;
+            
+            // Quantify and scale base nutritional metrics automatically
+            cal = Math.round(food.calories * item.quantity);
+            pro = parseFloat((food.protein * item.quantity).toFixed(2));
+            carb = parseFloat((food.carbs * item.quantity).toFixed(2));
+            fat = parseFloat((food.fat * item.quantity).toFixed(2));
+          } else {
+            // Track unmatched items
+            unmatchedItems.push(item.name);
+          }
+        } else if (!finalFoodId && !item.name) {
+          // If no food_id and no name, track as unknown
+          unmatchedItems.push('Unknown item');
+        }
+
+        // Insert into the items table using either user-supplied or AI-calculated values
         await client.query(`
           INSERT INTO meal_items 
           (meal_log_id, food_id, quantity, custom_calories, custom_protein, custom_carbs, custom_fat)
           VALUES ($1, $2, $3, $4, $5, $6, $7)
         `, [
           mealLog.id, 
-          item.food_id, 
+          finalFoodId, 
           item.quantity, 
-          item.custom_calories, 
-          item.custom_protein, 
-          item.custom_carbs, 
-          item.custom_fat
+          cal, 
+          pro, 
+          carb, 
+          fat
         ]);
       }
 
