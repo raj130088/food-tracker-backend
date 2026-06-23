@@ -43,7 +43,12 @@ const aiController = {
       // Step 1: Extract tracking matrices from text using local AI
       const extraction = await aiService.handleNaturalLogging(user, message);
       
-      const { meal_type, items, notes } = extraction.data;
+      let { meal_type, items, notes } = extraction.data;
+
+      // Fix: Enforce exact Title Case validation matching the database check constraint
+      if (meal_type && typeof meal_type === 'string') {
+        meal_type = meal_type.trim().charAt(0).toUpperCase() + meal_type.trim().slice(1).toLowerCase();
+      }
 
       // Step 2: Use your Phase 2 meal service to log this straight into the database
       // This automatically updates the user's meal history logs!
