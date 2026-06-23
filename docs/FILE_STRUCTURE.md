@@ -326,3 +326,23 @@ This document provides a comprehensive inventory of all files in the Food Tracke
 - **Key exports/functions**: N/A (compiled Python files)
 - **Dependencies**: Python runtime
 - **Used by**: Python interpreter
+
+## Test Files
+
+### /tests/ai.api.test.js
+- **Purpose**: API integration tests for AI endpoints
+- **Key exports/functions**: Tests for the `/api/ai/log-natural` endpoint
+- **Dependencies**: supertest, express, database pool
+- **Used by**: Jest test runner
+
+### /tests/ai.service.test.js
+- **Purpose**: Unit tests for AI service layer
+- **Key exports/functions**: Tests for `handleNaturalLogging` function
+- **Dependencies**: Jest mocking framework
+- **Used by**: Jest test runner
+
+### /tests/ai.edge.test.js
+- **Purpose**: Edge case and resilience tests for AI functionality
+- **Key exports/functions**: Tests for error handling, malformed inputs, and boundary conditions
+- **Dependencies**: supertest, express, database pool, Jest mocking framework
+- **Used by**: Jest test runner

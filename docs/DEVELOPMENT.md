@@ -312,34 +312,48 @@ The project follows standard JavaScript conventions with some specific guideline
 
 ### Current Testing Approach
 
-The application currently lacks formal automated tests. Testing is performed manually through:
+The application now includes automated tests using Jest as the testing framework. Testing is performed through:
 
-1. **API testing** with tools like Postman or curl
-2. **Database verification** with direct SQL queries
-3. **Integration testing** by using the application features
+1. **Unit tests** for individual functions and methods with mocked dependencies
+2. **API integration tests** using Supertest to simulate HTTP requests
+3. **Edge case and resilience tests** to ensure graceful handling of unexpected inputs
+4. **Database verification** with direct SQL queries when needed
 
-### Planned Testing Improvements
-
-Future testing implementation should include:
-
-1. **Unit tests** for individual functions and methods
-2. **Integration tests** for API endpoints
-3. **Database tests** for model operations
-4. **AI service tests** for prompt/response validation
-
-Example test structure:
+Test files are located in the `tests/` directory with the following structure:
 ```
-test/
-├── unit/
-│   ├── controllers/
-│   ├── models/
-│   └── services/
-├── integration/
-│   ├── api/
-│   └── database/
-└── ai/
-    └── prompts/
+tests/
+├── ai.api.test.js       # API integration tests for AI endpoints
+├── ai.service.test.js   # Unit tests for AI service layer
+└── ai.edge.test.js      # Edge case and resilience tests
 ```
+
+For detailed information about the testing strategy, see [TESTING.md](TESTING.md).
+
+### Running Tests
+
+To run the test suite:
+
+```bash
+npm test
+```
+
+To run tests in watch mode:
+
+```bash
+npm test -- --watch
+```
+
+### Adding New Tests
+
+When adding new tests, follow these guidelines:
+
+1. Place unit tests in `ai.service.test.js`
+2. Place API integration tests in `ai.api.test.js`
+3. Place edge case tests in `ai.edge.test.js`
+4. Use descriptive test names that clearly indicate what is being tested
+5. Mock external dependencies to ensure tests are isolated
+6. Test both success and failure scenarios
+7. Validate all expected response properties
 
 ## Debugging
 

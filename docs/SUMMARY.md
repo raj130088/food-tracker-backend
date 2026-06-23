@@ -60,6 +60,12 @@ This documentation provides comprehensive information about the Food Tracker bac
 - Dependencies and usage
 - Key exports and functions
 
+### 9. [TESTING.md](TESTING.md)
+- Testing strategy and structure
+- Unit, integration, and edge case tests
+- Running and adding new tests
+- Mocking approach and test data
+
 ## Quick Links
 
 - [Project Repository](../)
